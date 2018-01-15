@@ -3,7 +3,7 @@ const Control = require('control-panel');
 
 let counter = -1;
 const path = 'image.png';
-const app = new PIXI.Application(256 * 3, 256);
+const app = new PIXI.Application(256 * 4, 256);
 app.stage.scale.x = app.stage.scale.y = 0.0625;
 document.body.appendChild(app.view);
 
@@ -48,13 +48,32 @@ const viaBlob = () => {
     });
 }
 
+const viaWorker = () => {
+  const worker = new Worker('worker.js');
+  const timeout = setTimeout(() => worker.terminate(), 2000);
+  worker.postMessage(path);
+  worker.onmessage = function(evt) {
+    if (evt.data.type === 'image') {
+      const resource = new PIXI.resources.BaseImageResource(evt.data.image);
+      const baseTexture = new PIXI.BaseTexture(resource);
+      const texture = new PIXI.Texture(baseTexture);
+      const sprite = new PIXI.Sprite(texture);
+      sprite.position.x = sprite.width * counter;
+      app.stage.addChild(sprite);
+    }
+    clearTimeout(timeout);
+    worker.terminate();
+  }
+}
+
 const incFunc = func => () => {
   counter++;
   func();
 }
 
 const buttons = Control([
-  {type: 'button', label: 'HTMLImageElement', action: incFunc(viaHtmlImage) },
-  {type: 'button', label: 'ResourceLoader', action: incFunc(viaResourceLoader) },
-  {type: 'button', label: 'Blob', action: incFunc(viaBlob)}
+  {type: 'button', label: 'HTMLImageElement', action: incFunc(viaHtmlImage)},
+  {type: 'button', label: 'ResourceLoader', action: incFunc(viaResourceLoader)},
+  {type: 'button', label: 'Blob', action: incFunc(viaBlob)},
+  {type: 'button', label: 'Worker', action: incFunc(viaWorker)}
 ]);
