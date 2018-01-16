@@ -3,9 +3,32 @@ const Control = require('control-panel');
 
 let counter = -1;
 const path = 'image.png';
-const app = new PIXI.Application(256 * 4, 256);
+const app = new PIXI.Application(256 * 5, 256);
 app.stage.scale.x = app.stage.scale.y = 0.0625;
 document.body.appendChild(app.view);
+
+const viaHtmlImageResourceLoader = () => {
+  const index = 'img' + counter;
+  PIXI.Loader.shared.add(index, path).load((loader, resources) => {
+    const sprite = new PIXI.Sprite(resources[index].texture);
+    sprite.position.x = sprite.width * counter;
+    app.stage.addChild(sprite);
+  });
+}
+
+const viaBlobResourceLoader = () => {
+  const index = 'img' + counter;
+  PIXI.Loader.shared
+    .add(index, path, {
+      loadType: PIXI.Loader.Resource.LOAD_TYPE.XHR,
+      xhrType: PIXI.Loader.Resource.XHR_RESPONSE_TYPE.BLOB
+    })
+    .load((loader, resources) => {
+      const sprite = new PIXI.Sprite(resources[index].texture);
+      sprite.position.x = sprite.width * counter;
+      app.stage.addChild(sprite);
+    });
+}
 
 const viaHtmlImage = () => {
   const img = new Image();
@@ -21,15 +44,6 @@ const viaHtmlImage = () => {
         app.stage.addChild(sprite);
       });
   }
-}
-
-const viaResourceLoader = () => {
-  const index = 'img' + counter;
-  PIXI.Loader.shared.add(index, path).load((loader, resources) => {
-    const sprite = new PIXI.Sprite(resources[index].texture);
-    sprite.position.x = sprite.width * counter;
-    app.stage.addChild(sprite);
-  });
 }
 
 const viaBlob = () => {
@@ -72,8 +86,9 @@ const incFunc = func => () => {
 }
 
 const buttons = Control([
-  {type: 'button', label: 'HTMLImageElement', action: incFunc(viaHtmlImage)},
-  {type: 'button', label: 'ResourceLoader', action: incFunc(viaResourceLoader)},
-  {type: 'button', label: 'Blob', action: incFunc(viaBlob)},
-  {type: 'button', label: 'Worker', action: incFunc(viaWorker)}
+  {type: 'button', label: 'ResourceLoader Image', action: incFunc(viaHtmlImageResourceLoader)},
+  {type: 'button', label: 'ResourceLoader Blob', action: incFunc(viaBlobResourceLoader)},
+  {type: 'button', label: 'Fetch Image', action: incFunc(viaHtmlImage)},
+  {type: 'button', label: 'Fetch Blob', action: incFunc(viaBlob)},
+  {type: 'button', label: 'Fetch Worker Blob', action: incFunc(viaWorker)}
 ]);
